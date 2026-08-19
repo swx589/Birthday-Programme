@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生日星座运势查询小程序</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        body {
+            background-color: #1f2937;
+            color: #fff;
+            padding: 40px;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+        .container {
+            background-color: #374151;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px #00000050;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 28px;
+            color: #60a5fa;
+        }
+        .input-item {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size:16px;
+        }
+        input {
+            width: 100%;
+            padding:12px;
+            border-radius: 6px;
+            border: none;
+            font-size:16px;
+            background:#4b5563;
+            color:white;
+        }
+        .btn-group{
+            display:flex;
+            gap:10px;
+            margin:20px 0;
+            flex-wrap:wrap;
+        }
+        button{
+            flex:1;
+            min-width:120px;
+            padding:12px;
+            border-radius:6px;
+            border:none;
+            cursor:pointer;
+            font-size:15px;
+            background:#2563eb;
+            color:white;
+            transition: 0.2s;
+        }
+        button:hover{
+            background:#1d4ed8;
+        }
+        #result{
+            background:#111827;
+            padding:20px;
+            border-radius:8px;
+            min-height:120px;
+            white-space: pre-wrap;
+            line-height:1.7;
+        }
+        .tip{
+            color:#9ca3af;
+            font-size:13px;
+            margin-top:6px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>生日星座运势查询</h1>
+    <div class="input-item">
+        <label>请输入你的出生日期（格式示例：2000‑05‑20 或 05‑20）</label>
+        <input id="birthdayInput" placeholder="例如：2000‑08‑15 或者 08‑15">
+        <div class="tip">带年份会计算已出生总天数，只输入月‑日只算生日倒计时和星座</div>
+    </div>
+    <div class="btn-group">
+        <button onclick="calcAll()">开始查询全部信息</button>
+        <button onclick="exportFile()">导出运势结果到文件</button>
+        <button onclick="clearAll()">清空</button>
+    </div>
+    <div id="result"></div>
+</div>
+
+<script>
+// 根据月、日获取星座，和你截图的python逻辑完全一致
+function getConstellation(month, day) {
+    const dates = [
+        [1, 20, "水瓶座"],
+        [2, 19, "双鱼座"],
+        [3, 21, "白羊座"],
+        [4, 20, "金牛座"],
+        [5, 21, "双子座"],
+        [6, 22, "巨蟹座"],
+        [7, 23, "狮子座"],
+        [8, 23, "处女座"],
+        [9, 23, "天秤座"],
+        [10, 24, "天蝎座"],
+        [11, 23, "射手座"],
+        [12, 22, "摩羯座"]
+    ];
+    if (day < dates[month - 1][1]) {
+        return dates[(month - 2 + 12) % 12][2];
+    } else {
+        return dates[month - 1][2];
+    }
+}
+
+// 模拟运势库
+const fortuneList = [
+    "今日整体运势良好，做事效率高，适合推进计划。爱情运平平，多和身边人沟通。财运平稳，不宜冲动消费。健康注意睡眠。",
+    "今日运势中等，会遇到小阻碍，保持耐心。人际方面注意说话分寸。财运小收获。适当运动放松。",
+    "今日大吉！机遇较多，适合大胆行动。贵人运佳，容易得到帮助。财运有惊喜，心情舒畅。",
+    "今日需要谨慎行事，不要做重大决定。情绪容易起伏，多给自己独处时间，饮食清淡。"
+];
+
+let outputText = "";
+
+function calcAll() {
+    outputText = "";
+    const inputVal = document.getElementById("birthdayInput").value.trim();
+    const resDom = document.getElementById("result");
+    if (!inputVal) {
+        resDom.innerText = "⚠️请输入出生日期！";
+        return;
+    }
+    let year = null, month, day;
+    let parts;
+    if (inputVal.includes("-")) {
+        parts = inputVal.split("-");
+        if (parts.length ===3) {
+            year = parseInt(parts[0]);
+            month = parseInt(parts[1]);
+            day = parseInt(parts[2]);
+        } else if (parts.length ===2) {
+            month = parseInt(parts[0]);
+            day = parseInt(parts[1]);
+        } else {
+            resDom.innerText = "❌格式错误！示例：2000‑05‑20 或者 05‑20";
+            return;
+        }
+    } else {
+        resDom.innerText = "❌格式错误！示例：2000‑05‑20 或者 05‑20";
+        return;
+    }
+
+    if (!(month >=1 && month <=12 && day >=1 && day <=31)) {
+        resDom.innerText = "❌月份或日期非法！";
+        return;
+    }
+
+    const starSign = getConstellation(month, day);
+    const today = new Date();
+    //计算下一个生日
+    let nextBirth = new Date(today.getFullYear(), month-1, day);
+    if(nextBirth < today){
+        nextBirth = new Date(today.getFullYear()+1, month-1, day);
+    }
+    const diffMs = nextBirth - today;
+    const daysToBirth = Math.ceil(diffMs/(1000*60*60*24));
+
+    outputText += `====生日星座运势查询结果====\n`;
+    outputText += `输入生日：${inputVal}\n`;
+    outputText += `你的星座：${starSign}\n`;
+    outputText += `距离下一个生日还有：${daysToBirth} 天\n`;
+
+    // 如果输入了年份，计算活了多少天
+    if(year !== null){
+        const birthDateObj = new Date(year, month-1, day);
+        const livedMs = today - birthDateObj;
+        const livedDays = Math.floor(livedMs/(1000*60*60*24));
+        outputText += `从出生到现在，你已经度过：${livedDays} 天\n`;
+    }
+
+    //随机取运势
+    const randomFortune = fortuneList[Math.floor(Math.random()*fortuneList.length)];
+    outputText += `\n【${starSign}今日运势】\n${randomFortune}\n`;
+    outputText += `查询时间：${today.toLocaleString()}`;
+
+    resDom.innerText = outputText;
+}
+
+//导出文件
+function exportFile(){
+    if(!outputText){
+        alert("请先执行查询！");
+        return;
+    }
+    const blob = new Blob([outputText], {type:"text/plain;charset=utf‑8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "生日运势结果.txt";
+    a.click();
+}
+
+function clearAll(){
+    document.getElementById("birthdayInput").value = "";
+    document.getElementById("result").innerText = "";
+    outputText = "";
+}
+</script>
+</body>
+</html>
